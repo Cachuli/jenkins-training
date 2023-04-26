@@ -1,0 +1,106 @@
+#!groovy
+//-------------------------------------------------------------------------
+//-------------------------------------------------------------------------
+//-------------------------------------------------------------------------
+//Jenkinsfile (Declarative Pipeline)
+// -- Keep only 15 builds
+echo 'Discard old build'
+properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', 
+    daysToKeepStr: '', numToKeepStr: "15"))])
+
+pipeline {
+	
+    agent any
+    
+    
+    // -- Display a timestamp on the log.
+    options{timestamps()}
+	
+    stages {
+
+
+        // ------------------------------------
+		// -- STAGE: Initial Configuration
+		// ------------------------------------
+		stage("1 - clean workspace & install depencencies") {
+			steps {
+				
+				// -- Clean Workspace
+				echo "Clean Workspace"
+				cleanWs()
+			}
+		}
+		
+		// Parameters needed: JOB_GIT_BRANCH, JOB_GIT_URL, GIT_CREDENTIAL
+		// --------------------------------
+		// -- STAGE: Download GIT Code
+		// --------------------------------
+		stage("2- Download GIT Code") {
+			steps {
+				script {
+						println "git"
+						checkout([$class: 'GitSCM', branches: [[name: '$JOB_GIT_BRANCH']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: "$GIT_CREDENTIAL", url: '$JOB_GIT_URL']]])
+						git branch: '$JOB_GIT_BRANCH', credentialsId: "$GIT_CREDENTIAL", url: '$JOB_GIT_URL'
+				}   
+			}
+		}
+
+		
+
+        // ---------------------------------------
+		// -- STAGE: compile
+		// ---------------------------------------
+		stage("3 - compile") {
+			steps {
+				script {
+					println "compile"
+						bat "mvn clean compile -Dmaven.test.skip=true"  
+				}   
+			}
+		}
+		
+
+		// ---------------------------------------
+		// -- STAGE: tests
+		// ---------------------------------------
+		stage("4 - tests") {
+			steps {
+				script {
+					println "tests"
+						bat "mvn clean test"  
+				}   
+			}
+		}
+		
+		// ---------------------------------------
+		// -- STAGE: install
+		// ---------------------------------------
+		stage("5 - package") {
+			steps {
+				script {
+						println "package"
+						bat "mvn clean package install -Dmaven.test.skip=true"  
+				}   
+			}
+		}
+
+		 // ------------------------------------------
+        // -- STAGE: Archive JAR
+        // ------------------------------------------
+        stage('6 - Archive JAR') {
+            steps {
+                archiveArtifacts artifacts: 'target/*.jar', onlyIfSuccessful: true
+            }
+        }
+
+
+
+    }
+
+   
+
+
+}
+		
+	
+		

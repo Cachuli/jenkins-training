@@ -1,0 +1,50 @@
+#!groovy
+//-------------------------------------------------------------------------
+//-------------------------------------------------------------------------
+//-------------------------------------------------------------------------
+//Jenkinsfile (Declarative Pipeline)
+// -- Keep only 15 builds
+echo 'Discard old build'
+properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', 
+    daysToKeepStr: '', numToKeepStr: "15"))])
+
+pipeline {
+	
+    agent any
+    
+    
+    // -- Display a timestamp on the log.
+    options{timestamps()}
+	
+    stages {
+
+
+        // ------------------------------------
+		// -- STAGE: Initial Configuration
+		// ------------------------------------
+		stage("1 - clean workspace & install depencencies") {
+			steps {
+				
+				// -- Clean Workspace
+				echo "Clean Workspace"
+				cleanWs()
+			}
+		}
+		
+		// Parameters needed: JOB_GIT_BRANCH, JOB_GIT_URL, GIT_CREDENTIAL
+		// --------------------------------
+		// -- STAGE: Download GIT Code
+		// --------------------------------
+		stage("2- Download GIT Code") {
+			steps {
+				script {
+						println "git"
+						checkout([$class: 'GitSCM', branches: [[name: '$JOB_GIT_BRANCH']], doGenerateSubmoduleConfigurations: false, extensions: [], submoduleCfg: [], userRemoteConfigs: [[credentialsId: "$GIT_CREDENTIAL", url: '$JOB_GIT_URL']]])
+						git branch: '$JOB_GIT_BRANCH', credentialsId: "$GIT_CREDENTIAL", url: '$JOB_GIT_URL'
+				}   
+			}
+		}
+    }
+}
+		
+	
