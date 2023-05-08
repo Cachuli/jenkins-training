@@ -96,7 +96,7 @@ pipeline {
         stage('7 - jenkins.1') {
             steps {
 		bat returnStatus: true, script:"mkdir petclinic"
-                dir('C:\petclinic')
+                dir('/petclinic')
             }
         }
 
