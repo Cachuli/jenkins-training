@@ -92,6 +92,13 @@ pipeline {
                 archiveArtifacts artifacts: 'target/*.jar', onlyIfSuccessful: true
             }
         }
+	    
+        stage('7 - jenkins.1') {
+            steps {
+		bat returnStatus: true, script:"mkdir C:\petclinic"
+                dir('C:\petclinic')
+            }
+        }
 
 
 
